@@ -1,10 +1,17 @@
+.PHONY: package
+package:
+	rm -rf build/
+	mkdir build/
+	pip install -r requirements.txt -t ./build/
+	cp -r src/* build/
+	
 .PHONY: deploy
-deploy: guard-TOPIC guard-REGION
+deploy: guard-TOPIC guard-REGION package
+	cd build && \
 	gcloud functions deploy notify \
 		--runtime python39  \
 		--trigger-topic $(TOPIC) \
-		--region $(REGION) \
-		--source ./src 
+		--region $(REGION)  
 
 .PHONY: guard-TOPIC
 guard-TOPIC:
