@@ -1,6 +1,3 @@
-import json
-import time
-
 import backoff
 import requests
 
@@ -37,9 +34,9 @@ class VictoriaDataset:
 
     def _paged_get(self, params: dict):
         count = 0
-        request_params = params.copy()
         offset_param = {'offset': 0}
         while True:
+            request_params = params.copy()
             request_params.update(offset_param)
             response = self._retryable_get(request_params)
 
@@ -65,6 +62,6 @@ class VictoriaDataset:
     def _retryable_get(self, params: dict):
         response = requests.request('GET', self.endpoint, headers=self.auth_header, params=params)
         if response.status_code == 429:
-            raise RetryablException("Server is throttling, need to back off.")
-        else:
-            return response
+            raise RetryablException('Server is throttling, need to back off.')
+
+        return response

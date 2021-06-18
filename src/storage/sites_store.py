@@ -3,7 +3,7 @@ from typing import Optional
 
 from google.cloud import firestore
 
-from dateutils import parse_to_utc, as_string
+from utils.datetime import parse_to_utc, as_string
 from storage.site import Site
 
 

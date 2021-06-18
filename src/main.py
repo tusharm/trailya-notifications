@@ -4,10 +4,11 @@ from typing import Optional
 import firebase_admin
 
 from datasets import factories
-from dateutils import as_string
-from messaging import send_firebase_message
+from utils.datetime import as_string
+from utils.messaging import send_firebase_message
 from storage.site import Site
 from storage.sites_store import SitesStore
+from utils.secrets import get_secret
 
 firebase_admin.initialize_app()
 store = SitesStore()
@@ -35,12 +36,12 @@ def notify(event, context):
 
 
 def process(location):
-    api_key = os.getenv('API_KEY')
-    if api_key is None:
-        print('Missing env var API_KEY')
+    api_key_id = os.getenv('VIC_API_KEY_ID')
+    if api_key_id is None:
+        print('Missing env var VIC_API_KEY_ID')
         return
 
-    dataset = factories[location](api_key)
+    dataset = factories[location](get_secret(api_key_id))
     last_updated_on = store.last_updated_on()
 
     updated_sites = new_sites_since(last_updated_on, dataset)

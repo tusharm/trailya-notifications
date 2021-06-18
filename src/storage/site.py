@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from dateutils import parse_to_utc, build_isoformat_string
+from utils.datetime import parse_to_utc, build_isoformat_string
 
 
 @dataclass
