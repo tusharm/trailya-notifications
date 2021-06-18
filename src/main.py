@@ -5,6 +5,7 @@ import firebase_admin
 
 from datasets import factories
 from dateutils import as_string
+from messaging import send_firebase_message
 from storage.site import Site
 from storage.sites_store import SitesStore
 
@@ -43,19 +44,23 @@ def process(location):
     last_updated_on = store.last_updated_on()
 
     updated_sites = new_sites_since(last_updated_on, dataset)
+    if len(updated_sites) == 0:
+        print(f'No new exposure sites found since last run ({last_updated_on})')
+        return
 
-    print(f'Found {len(updated_sites)} updated sites since last run on {last_updated_on}')
+    print(f'Found {len(updated_sites)} new exposure sites since last run on {last_updated_on}')
     store.save(updated_sites)
 
-    # send_firebase_message(location)
+    send_firebase_message(location, len(updated_sites))
 
 
 def new_sites_since(last_update_date: Optional[str], dataset) -> [Site]:
     sites = dataset.sites()
+
     if last_update_date is None:
         return sites
 
-    sorted_sites = sorted(dataset.sites(), key=lambda s: s.added_time, reverse=True)
+    sorted_sites = sorted(sites, key=lambda s: s.added_time, reverse=True)
 
     for idx, site in enumerate(sorted_sites):
         if as_string(site.added_time) == last_update_date:

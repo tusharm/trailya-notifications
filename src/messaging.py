@@ -1,14 +1,11 @@
-import firebase_admin
 from firebase_admin import messaging
 
 
-def send_firebase_message(location_state: str):
-    firebase_admin.initialize_app()
-
+def send_firebase_message(location_state: str, sites_count: int):
     message = messaging.Message(
         topic=f'/topics/{location_state}',
         notification=messaging.Notification(
-            title=f'New exposure site for {location_state}'
+            title=f'{sites_count} new exposure sites for {location_state}'
         )
     )
     response = messaging.send(message)

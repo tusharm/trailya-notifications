@@ -1,8 +1,7 @@
 import itertools
 from typing import Optional
 
-import firebase_admin
-from firebase_admin import firestore
+from google.cloud import firestore
 
 from dateutils import parse_to_utc, as_string
 from storage.site import Site
@@ -10,7 +9,7 @@ from storage.site import Site
 
 class SitesStore:
     def __init__(self):
-        self.db = firestore.client()
+        self.db = firestore.Client()
 
     def last_updated_on(self) -> Optional[str]:
         stream = self.db.collection(u'exposure_sites').stream()
@@ -19,23 +18,23 @@ class SitesStore:
         return None if len(docs) == 0 else docs[0]
 
     def save(self, sites: [Site]):
-        grouped = itertools.groupby(sites, key=lambda s: s.added_time)
+        grouped = itertools.groupby(sites, key=lambda s: as_string(s.added_time))
 
         sites_ref = self.db.collection(u'exposure_sites')
         for date, daily_sites in grouped:
             sites_list = list(daily_sites)
 
-            date_doc_ref = sites_ref.document(as_string(date))
+            date_doc_ref = sites_ref.document(date)
             for site in sites_list:
                 date_doc_ref.collection(u'sites').add(site.to_dict())
 
-            date_doc_ref.set({
-                'count': len(sites_list)
-            })
+            if date_doc_ref.get().exists:
+                date_doc_ref.update({'count': firestore.Increment(len(sites_list))})
+            else:
+                date_doc_ref.set({'count': len(sites_list)})
 
 
 if __name__ == '__main__':
-    firebase_admin.initialize_app()
     exposure_sites = SitesStore()
     sites = [
         Site(

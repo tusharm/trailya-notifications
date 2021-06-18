@@ -1,7 +1,10 @@
+.PHONY: clean
+clean:
+	rm -rf build/
+
 .PHONY: package
 package:
-	rm -rf build/
-	mkdir build/
+	mkdir -p build/
 	pip install -r requirements.txt -t ./build/
 	cp -r src/* build/
 	
