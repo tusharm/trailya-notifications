@@ -4,7 +4,7 @@ import requests
 from storage.site import Site
 
 
-class RetryablException(Exception):
+class RetryableException(Exception):
     pass
 
 
@@ -58,10 +58,10 @@ class VictoriaDataset:
 
             offset_param['offset'] = count
 
-    @backoff.on_exception(backoff.expo, RetryablException, max_time=120)
+    @backoff.on_exception(backoff.expo, RetryableException, max_time=120)
     def _retryable_get(self, params: dict):
         response = requests.request('GET', self.endpoint, headers=self.auth_header, params=params)
         if response.status_code == 429:
-            raise RetryablException('Server is throttling, need to back off.')
+            raise RetryableException('Server is throttling, need to back off.')
 
         return response

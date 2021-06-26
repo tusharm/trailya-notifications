@@ -1,17 +1,15 @@
-import os
 from typing import Optional
 
 import firebase_admin
 
-from datasets import factories
-from utils.datetime import as_string
-from utils.messaging import send_firebase_message
+from config import config_factory
 from storage.site import Site
 from storage.sites_store import SitesStore
-from utils.secrets import get_secret
+from utils.dateutils import as_string
+from utils.geocoder import Geocoder
+from utils.messaging import send_firebase_message
 
 firebase_admin.initialize_app()
-store = SitesStore()
 
 
 def notify(event, context):
@@ -27,21 +25,18 @@ def notify(event, context):
         return
 
     location = event['attributes']['state']
-
-    if location not in factories:
+    if location not in config_factory:
         print(f'Unsupported location {location}')
         return
 
     process(location)
 
 
-def process(location):
-    api_key_id = os.getenv('VIC_API_KEY_ID')
-    if api_key_id is None:
-        print('Missing env var VIC_API_KEY_ID')
-        return
+def process(location: str):
+    config = config_factory[location]
+    dataset = config.dataset_creator()(config.dataset_api_key())
+    store = SitesStore(Geocoder(config.maps_api_key()))
 
-    dataset = factories[location](get_secret(api_key_id))
     last_updated_on = store.last_updated_on()
 
     updated_sites = new_sites_since(last_updated_on, dataset)

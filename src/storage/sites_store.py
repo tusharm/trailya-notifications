@@ -3,12 +3,14 @@ from typing import Optional
 
 from google.cloud import firestore
 
-from utils.datetime import parse_to_utc, as_string
 from storage.site import Site
+from utils.dateutils import as_string
+from utils.geocoder import Geocoder
 
 
 class SitesStore:
-    def __init__(self):
+    def __init__(self, geocoder: Geocoder):
+        self.geocoder = geocoder
         self.db = firestore.Client()
 
     def last_updated_on(self) -> Optional[str]:
@@ -26,6 +28,7 @@ class SitesStore:
 
             date_doc_ref = sites_ref.document(date)
             for site in sites_list:
+                site.geocode = self.geocoder.get_geocode(site.full_address())
                 date_doc_ref.collection(u'sites').add(site.to_dict())
 
             if date_doc_ref.get().exists:
@@ -33,31 +36,3 @@ class SitesStore:
             else:
                 date_doc_ref.set({'count': len(sites_list)})
 
-
-if __name__ == '__main__':
-    exposure_sites = SitesStore()
-    sites = [
-        Site(
-            'Maidstone',
-            'Arcare Maidstone Aged Care (Entire Facility)',
-            '31 Hampstead Road',
-            'VIC',
-            3012,
-            parse_to_utc('2021-05-26T00:00:00+10:00'),
-            parse_to_utc('2021-05-26T11:59:00+10:00'),
-            parse_to_utc('2021-05-28T16:15:00+10:00'),
-        ),
-        Site(
-            'Melbourne',
-            'Woolworths Metro Little Collins St',
-            '360 Little Collins St',
-            'VIC',
-            3000,
-            parse_to_utc('2021-06-03T12:10:00+10:00'),
-            parse_to_utc('2021-06-03T12:50:00+10:00'),
-            parse_to_utc('2021-06-05T12:00:00+10:00'),
-        )
-    ]
-    print(sites)
-    exposure_sites.save(sites)
-    print(exposure_sites.last_updated_on())

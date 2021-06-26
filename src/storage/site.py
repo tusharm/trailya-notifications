@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
-from utils.datetime import parse_to_utc, build_isoformat_string
+from utils.dateutils import parse_to_utc, build_isoformat_string
 
 
 @dataclass
@@ -15,6 +15,7 @@ class Site:
     exposure_start_time: datetime
     exposure_end_time: datetime
     added_time: datetime
+    geocode: dict
 
     def to_dict(self):
         result = {
@@ -29,7 +30,13 @@ class Site:
         if self.postcode:
             result['postcode'] = int(self.postcode)
 
+        if self.geocode:
+            result['geocode'] = self.geocode
+
         return result
+
+    def full_address(self) -> str:
+        return f'{self.title}, {self.street_address}, {self.suburb}, {self.state} {self.postcode}'
 
     def __str__(self) -> str:
         return f"""Site(
@@ -56,5 +63,3 @@ class Site:
             parse_to_utc(build_isoformat_string(data['Exposure_date_dtm'], data['Exposure_time_end_24'])),
             parse_to_utc(build_isoformat_string(data['Added_date_dtm'], data['Added_time'])),
         )
-
-
