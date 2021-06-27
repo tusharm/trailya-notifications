@@ -16,10 +16,7 @@ class Config:
     def maps_api_key(self):
         return self._maps_api_key
 
-    def dataset_api_key(self):
-        raise NotImplementedError
-
-    def dataset_creator(self):
+    def dataset_service(self):
         raise NotImplementedError
 
     def _getenv_or_raise(self, config_name: str):

@@ -2,6 +2,7 @@ import backoff
 import requests
 
 from storage.site import Site
+from utils.dateutils import parse_to_utc
 
 
 class RetryableException(Exception):
@@ -15,6 +16,7 @@ class VictoriaDataset:
 
     def __init__(self, api_key: str):
         self.auth_header = {'apikey': api_key}
+        self.parser = VictoriaSiteParser()
 
     @staticmethod
     def create(api_key: str):
@@ -28,7 +30,7 @@ class VictoriaDataset:
 
         sites = []
         for page in self._paged_get(params):
-            sites = sites + [Site.from_dict(site) for site in page]
+            sites = sites + [self.parser.to_site(site) for site in page]
 
         return sites
 
@@ -65,3 +67,39 @@ class VictoriaDataset:
             raise RetryableException('Server is throttling, need to back off.')
 
         return response
+
+
+class VictoriaSiteParser:
+    timezone = 'Australia/Melbourne'
+
+    def to_site(self, site: dict) -> Site:
+        exposure_start_time = parse_to_utc(f"{site['Exposure_date_dtm']} {site['Exposure_time_start_24']}",
+                                           self.timezone)
+        exposure_end_time = parse_to_utc(f"{site['Exposure_date_dtm']} {site['Exposure_time_end_24']}", self.timezone)
+        added_time = parse_to_utc(f"{site['Added_date_dtm']} {site['Added_time']}", self.timezone)
+
+        return Site(
+            site['Suburb'],
+            site['Site_title'],
+            site['Site_streetaddress'],
+            site['Site_state'],
+            int(site['Site_postcode']) if site['Site_postcode'] else None,
+            exposure_start_time,
+            exposure_end_time,
+            added_time,
+            None,
+            None,
+            {},
+            {}
+        )
+
+
+if __name__ == '__main__':
+    import os
+
+    if 'VIC_API_KEY' not in os.environ:
+        raise Exception('Missing env var VIC_API_KEY')
+
+    dataset = VictoriaDataset(os.environ['VIC_API_KEY'])
+    for s in dataset.sites():
+        print(s)

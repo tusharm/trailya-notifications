@@ -1,3 +1,6 @@
+.PHONY: test
+test:
+	PYTHONPATH=src/ pytest -v test/
 
 .PHONY: deploy
 deploy: guard-TOPIC guard-REGION guard-VIC_API_KEY_ID guard-SERVICE_ACCOUNT

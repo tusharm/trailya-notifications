@@ -17,26 +17,23 @@ def notify(event, context):
         f'Triggered by messageId {context.event_id}, published at {context.timestamp} to {context.resource["name"]}')
 
     if 'attributes' not in event:
-        print('No attributes found in the message, aborting..')
-        return
+        raise Exception('No attributes found in the message, aborting..')
 
     if 'state' not in event['attributes']:
-        print('Attribute "state" not found in message, aborting..')
-        return
+        raise Exception('Attribute "state" not found in message, aborting..')
 
     location = event['attributes']['state']
-    if location not in config_factory:
-        print(f'Unsupported location {location}')
-        return
-
     process(location)
 
 
 def process(location: str):
-    config = config_factory[location]
-    dataset = config.dataset_creator()(config.dataset_api_key())
-    store = SitesStore(Geocoder(config.maps_api_key()))
+    config = config_factory(location)
+    if config is None:
+        raise Exception(f'Unknown location: {location}')
 
+    dataset = config.dataset_service()
+
+    store = SitesStore(Geocoder(config.maps_api_key()), location=location)
     last_updated_on = store.last_updated_on()
 
     updated_sites = new_sites_since(last_updated_on, dataset)
@@ -66,4 +63,4 @@ def new_sites_since(last_update_date: Optional[str], dataset) -> [Site]:
 
 
 if __name__ == '__main__':
-    process('Victoria')
+    process('NSW')
