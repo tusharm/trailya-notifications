@@ -67,7 +67,17 @@ def test_exposure_times():
         test_data['Time'] = time_str
 
         site = parser.to_site(test_data)
-        assert time_str, site.exposure_start_time == parse(start, tzinfos={'AST': gettz('Australia/Sydney')}).astimezone(
+        assert time_str, site.exposure_start_time == parse(start,
+                                                           tzinfos={'AST': gettz('Australia/Sydney')}).astimezone(
             timezone.utc)
         assert time_str, site.exposure_end_time == parse(end, tzinfos={'AST': gettz('Australia/Sydney')}).astimezone(
             timezone.utc)
+
+
+def test_invalid_exposure_date_is_defaulted_to_added_date():
+    test_data = sample_site.copy()
+    test_data['Date'] = 'Sunday 20 to Monday 21 June 2021'
+
+    site = parser.to_site(test_data)
+    assert site.exposure_start_time == parse("2021-06-26T00:00:00 AST",
+                                             tzinfos={'AST': gettz('Australia/Sydney')}).astimezone(timezone.utc)

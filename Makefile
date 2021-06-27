@@ -3,7 +3,7 @@ test:
 	PYTHONPATH=src/ pytest -v test/
 
 .PHONY: deploy
-deploy: guard-TOPIC guard-REGION guard-VIC_API_KEY_ID guard-SERVICE_ACCOUNT
+deploy: guard-TOPIC guard-REGION guard-VIC_API_KEY_ID guard-MAPS_API_KEY_ID guard-SERVICE_ACCOUNT
 	cd src && \
 	ln -fs ../requirements.txt . && \
 	gcloud functions deploy notify \
@@ -11,6 +11,7 @@ deploy: guard-TOPIC guard-REGION guard-VIC_API_KEY_ID guard-SERVICE_ACCOUNT
 		--trigger-topic $(TOPIC) \
 		--region $(REGION) \
 		--set-env-vars VIC_API_KEY_ID=$(VIC_API_KEY_ID) \
+		--set-env-vars MAPS_API_KEY_ID=$(MAPS_API_KEY_ID) \
 		--service-account=$(SERVICE_ACCOUNT)
 
 .PHONY: guard-TOPIC
@@ -29,6 +30,12 @@ endif
 guard-VIC_API_KEY_ID:
 ifndef VIC_API_KEY_ID
 	$(error VIC_API_KEY_ID env var missing)
+endif
+
+.PHONY: guard-MAPS_API_KEY_ID
+guard-MAPS_API_KEY_ID:
+ifndef MAPS_API_KEY_ID
+	$(error MAPS_API_KEY_ID env var missing)
 endif
 
 .PHONY: guard-SERVICE_ACCOUNT

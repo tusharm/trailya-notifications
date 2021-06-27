@@ -1,4 +1,5 @@
 import re
+from datetime import datetime
 
 import requests
 
@@ -53,8 +54,8 @@ class NSWSiteParser:
     def to_site(self, site: dict) -> Site:
         errors = DatasetErrors()
 
-        exposure_start_time, exposure_end_time = self._get_exposure_times(site, errors)
         added_time = parse_to_utc(f'{site["Last updated date"]}T00:00:00', self.timezone)
+        exposure_start_time, exposure_end_time = self._get_exposure_times(site, errors, added_time)
 
         lat, long = self._get_lat_long(site, errors)
 
@@ -78,15 +79,23 @@ class NSWSiteParser:
         long = errors.try_operation(lambda: float(site['Lon']), None, msg=f'Error parsing \'Lon\' field: {site["Lon"]}')
         return lat, long
 
-    def _get_exposure_times(self, site: dict, errors: DatasetErrors):
+    def _get_exposure_times(self, site: dict, errors: DatasetErrors, default: datetime):
         error_msg = f'Error parsing \'Time\' field value: {site["Time"]}'
         exposure_times = self.time_pattern.findall(site['Time'])
 
         start_time = errors.try_operation(lambda: exposure_times[0], '12:00am', msg=error_msg).replace('.', ':')
-        exposure_start_time = parse_to_utc(f'{site["Date"]} {start_time}', self.timezone)
+        exposure_start_time = errors.try_operation(
+            lambda: parse_to_utc(f'{site["Date"]} {start_time}', self.timezone),
+            default,
+            f'Error parsing \'Date\' field value in \'{site["Date"]} {start_time}\''
+        )
 
         end_time = errors.try_operation(lambda: exposure_times[1], '11:59pm', msg=error_msg).replace('.', ':')
-        exposure_end_time = parse_to_utc(f'{site["Date"]} {end_time}', self.timezone)
+        exposure_end_time = errors.try_operation(
+            lambda: parse_to_utc(f'{site["Date"]} {end_time}', self.timezone),
+            default,
+            f'Error parsing \'Date\' field value in \'{site["Date"]} {end_time}\''
+        )
 
         return exposure_start_time, exposure_end_time
 
