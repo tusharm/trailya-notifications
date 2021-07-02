@@ -1,15 +1,9 @@
-import backoff
-import requests
-
+from datasets.dataset import Dataset
 from storage.site import Site
 from utils.dateutils import parse_to_utc
 
 
-class RetryableException(Exception):
-    pass
-
-
-class VictoriaDataset:
+class VictoriaDataset(Dataset):
     resource_id = 'afb52611-6061-4a2b-9110-74c920bede77'
     endpoint = 'https://wovg-community.gateway.prod.api.vic.gov.au/datavic/v1.2/datastore_search'
     page_size = 50
@@ -28,11 +22,11 @@ class VictoriaDataset:
             'limit': self.page_size
         }
 
-        sites = []
+        site_list = []
         for page in self._paged_get(params):
-            sites = sites + [self.parser.to_site(site) for site in page]
+            site_list = site_list + [self.parser.to_site(site) for site in page]
 
-        return sites
+        return site_list
 
     def _paged_get(self, params: dict):
         count = 0
@@ -40,11 +34,7 @@ class VictoriaDataset:
         while True:
             request_params = params.copy()
             request_params.update(offset_param)
-            response = self._retryable_get(request_params)
-
-            if not response.ok:
-                raise Exception(
-                    f'Unknown API error, code: {response.status_code}, text: {response.text}')
+            response = self.get_with_retries(self.endpoint, params=request_params, headers=self.auth_header)
 
             response_data = response.json()
             if not response_data['success']:
@@ -59,14 +49,6 @@ class VictoriaDataset:
                 break
 
             offset_param['offset'] = count
-
-    @backoff.on_exception(backoff.expo, RetryableException, max_time=120)
-    def _retryable_get(self, params: dict):
-        response = requests.request('GET', self.endpoint, headers=self.auth_header, params=params)
-        if response.status_code == 429:
-            raise RetryableException('Server is throttling, need to back off.')
-
-        return response
 
 
 class VictoriaSiteParser:
@@ -101,5 +83,8 @@ if __name__ == '__main__':
         raise Exception('Missing env var VIC_API_KEY')
 
     dataset = VictoriaDataset(os.environ['VIC_API_KEY'])
-    for s in dataset.sites():
+    sites = dataset.sites()
+    for s in sites:
         print(s)
+
+    print(f'Total no of sites: {len(sites)}')

@@ -7,12 +7,13 @@ deploy: guard-TOPIC guard-REGION guard-VIC_API_KEY_ID guard-MAPS_API_KEY_ID guar
 	cd src && \
 	ln -fs ../requirements.txt . && \
 	gcloud functions deploy notify \
-		--runtime python39  \
-		--trigger-topic $(TOPIC) \
-		--region $(REGION) \
+		--runtime=python39  \
+		--trigger-topic=$(TOPIC) \
+		--region=$(REGION) \
 		--set-env-vars VIC_API_KEY_ID=$(VIC_API_KEY_ID) \
 		--set-env-vars MAPS_API_KEY_ID=$(MAPS_API_KEY_ID) \
-		--service-account=$(SERVICE_ACCOUNT)
+		--service-account=$(SERVICE_ACCOUNT) \
+		--timeout=540s
 
 .PHONY: guard-TOPIC
 guard-TOPIC:

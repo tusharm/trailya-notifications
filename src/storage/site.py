@@ -1,6 +1,9 @@
+import hashlib
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
+
+from utils.dateutils import to_epoch_millis
 
 
 @dataclass
@@ -17,6 +20,15 @@ class Site:
     longitude: Optional[float]
     geocode: dict
     data_errors: []
+
+    def id(self):
+        hash_fn = hashlib.blake2b(digest_size=15)
+        start_ms = to_epoch_millis(self.exposure_start_time)
+        end_ms = to_epoch_millis(self.exposure_end_time)
+
+        as_bytes = bytes(f'${self.latitude}_${self.longitude}_${start_ms}_${end_ms}', 'UTF-8')
+        hash_fn.update(as_bytes)
+        return hash_fn.hexdigest()
 
     def to_dict(self):
         result = {
@@ -43,6 +55,11 @@ class Site:
 
     def full_address(self) -> str:
         return f'{self.title}, {self.street_address}, {self.suburb}, {self.state} {self.postcode}'
+
+    def set_geocode(self, geo: dict):
+        self.geocode = geo
+        self.latitude = geo['geometry']['location']['lat']
+        self.longitude = geo['geometry']['location']['lng']
 
     def __str__(self) -> str:
         return f"""Site(
