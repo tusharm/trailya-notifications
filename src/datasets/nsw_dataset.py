@@ -24,7 +24,7 @@ class NSWDataset(Dataset):
         response = self.get_with_retries(self.endpoint)
 
         sites = list(map(lambda s: self.parser.to_site(s), response.json()['data']['monitor']))
-        print(f"Got {len(response.json()['data']['monitor'])} site results")
+        print(f'Got {len(sites)} sites from NSW dataset API.')
         return sites
 
 

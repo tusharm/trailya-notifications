@@ -22,7 +22,7 @@ def notify(event, context):
     process(location)
 
 
-def process(location: str):
+def process(location: str, debug=False):
     config = config_factory(location)
     if config is None:
         raise Exception(f'Unknown location: {location}')
@@ -31,9 +31,12 @@ def process(location: str):
 
     store = SitesStore(Geocoder(config.maps_api_key()), location=location)
     updated_count = store.update(dataset.sites())
+    print(f'No of sites updated for {location}: {updated_count}')
 
-    send_firebase_message(location, updated_count)
+    if not debug and updated_count != 0:
+        send_firebase_message(location, updated_count)
+        print('Published update notification')
 
 
 if __name__ == '__main__':
-    process('NSW')
+    process('NSW', debug=True)

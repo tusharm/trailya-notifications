@@ -26,6 +26,7 @@ class VictoriaDataset(Dataset):
         for page in self._paged_get(params):
             site_list = site_list + [self.parser.to_site(site) for site in page]
 
+        print(f'Got {len(site_list)} sites from VIC dataset API.')
         return site_list
 
     def _paged_get(self, params: dict):
@@ -44,7 +45,6 @@ class VictoriaDataset(Dataset):
             count += len(records)
             yield records
 
-            print(f'Processed {count} records till now')
             if ('total' not in response_data['result']) or (count >= response_data['result']['total']):
                 break
 
