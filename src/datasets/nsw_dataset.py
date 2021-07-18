@@ -1,3 +1,4 @@
+import logging
 import re
 from datetime import datetime
 
@@ -5,6 +6,8 @@ from datasets.dataset import Dataset
 from datasets.errors import DatasetErrors
 from storage.site import Site
 from utils.dateutils import parse_to_utc
+
+log = logging.getLogger(__name__)
 
 
 class NSWDataset(Dataset):
@@ -24,7 +27,7 @@ class NSWDataset(Dataset):
         response = self.get_with_retries(self.endpoint)
 
         sites = list(map(lambda s: self.parser.to_site(s), response.json()['data']['monitor']))
-        print(f'Got {len(sites)} sites from NSW dataset API.')
+        log.info(f'Got {len(sites)} sites from NSW dataset API.')
         return sites
 
 
@@ -88,5 +91,4 @@ if __name__ == '__main__':
     for s in sites:
         print(s)
 
-    print(f'Total no of sites: {len(sites)}')
-
+    log.info(f'Total no of sites: {len(sites)}')

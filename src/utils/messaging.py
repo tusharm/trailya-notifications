@@ -1,4 +1,8 @@
+import logging
+
 from firebase_admin import messaging
+
+log = logging.getLogger(__name__)
 
 
 def send_firebase_message(location_state: str, sites_count: int):
@@ -15,4 +19,4 @@ def send_firebase_message(location_state: str, sites_count: int):
     )
     response = messaging.send(message)
     # Response is a message ID string.
-    print(f'Successfully sent message: {response}')
+    log.info(f'Successfully published sites update message: {response}')

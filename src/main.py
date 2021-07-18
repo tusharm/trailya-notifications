@@ -1,9 +1,13 @@
 import firebase_admin
+import logging
 
 from config import config_factory
 from storage.sites_store import SitesStore
 from utils.geocoder import Geocoder
 from utils.messaging import send_firebase_message
+
+logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s (%(name)s)', level=logging.INFO)
+log = logging.getLogger(__name__)
 
 firebase_admin.initialize_app()
 
@@ -31,11 +35,10 @@ def process(location: str, debug=False):
 
     store = SitesStore(Geocoder(config.maps_api_key()), location=location)
     updated_count = store.update(dataset.sites())
-    print(f'No of sites updated for {location}: {updated_count}')
+    log.info(f'No of sites updated for {location}: {updated_count}')
 
     if not debug and updated_count != 0:
         send_firebase_message(location, updated_count)
-        print('Published update notification')
 
 
 if __name__ == '__main__':

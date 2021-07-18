@@ -1,21 +1,23 @@
 import itertools
+import logging
 
 from google.cloud import firestore
 
-from config.config import Config
 from storage.site import Site
 from utils.dateutils import as_string
 from utils.geocoder import Geocoder
 
-"""
-This class writes data to Firestore.
-
-Note that our datasets are a full snapshot, so this class discards 
-previous state, where applicable and writes afresh 
-"""
+log = logging.getLogger(__name__)
 
 
 class SitesStore:
+    """
+    This class writes data to Firestore.
+
+    Note that our datasets are a full snapshot, so this class discards
+    previous state, where applicable and writes afresh
+    """
+
     def __init__(self, geocoder: Geocoder, location: str):
         self.geocoder = geocoder
         self.location = location
@@ -39,6 +41,7 @@ class SitesStore:
 
         for date, daily_sites in grouped_by_date:
             sites_as_list = list(daily_sites)
+            log.debug(f'Got {len(sites_as_list)} sites for date {date}')
 
             date_doc_count = 0
             date_doc_ref = location_col_ref.document(date)
@@ -57,7 +60,7 @@ class SitesStore:
 
                 updated_sites = len(sites_as_list) - date_doc_count
                 total_sites_updated += updated_sites
-                print(f'{updated_sites} new sites found for date {date}')
+                log.info(f'{updated_sites} new sites found for date {date}')
 
         return total_sites_updated
 

@@ -1,6 +1,10 @@
+import logging
+
 from datasets.dataset import Dataset
 from storage.site import Site
 from utils.dateutils import parse_to_utc
+
+log = logging.getLogger(__name__)
 
 
 class VictoriaDataset(Dataset):
@@ -26,7 +30,7 @@ class VictoriaDataset(Dataset):
         for page in self._paged_get(params):
             site_list = site_list + [self.parser.to_site(site) for site in page]
 
-        print(f'Got {len(site_list)} sites from VIC dataset API.')
+        log.info(f'Got {len(site_list)} sites from VIC dataset API.')
         return site_list
 
     def _paged_get(self, params: dict):
@@ -87,4 +91,4 @@ if __name__ == '__main__':
     for s in sites:
         print(s)
 
-    print(f'Total no of sites: {len(sites)}')
+    log.info(f'Total no of sites: {len(sites)}')

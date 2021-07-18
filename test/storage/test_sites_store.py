@@ -1,8 +1,5 @@
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from unittest.mock import Mock, patch, PropertyMock, call
-
-from mock import MagicMock
+from unittest.mock import Mock, MagicMock, patch
 
 from storage.sites_store import SitesStore
 
