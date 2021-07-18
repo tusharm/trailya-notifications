@@ -13,7 +13,7 @@ def send_firebase_message(location_state: str, sites_count: int):
             body=f'{location_state} has recorded {sites_count} new exposure sites.'
         ),
         data={
-            'type': 'site'
+            'type': 'sites_update'
         },
         android=messaging.AndroidConfig(priority='normal', ttl=3600)
     )
