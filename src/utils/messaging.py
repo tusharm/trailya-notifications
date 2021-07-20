@@ -15,7 +15,7 @@ def send_firebase_message(location_state: str, sites_count: int):
         data={
             'type': 'sites_update'
         },
-        android=messaging.AndroidConfig(priority='normal', ttl=3600)
+        android=messaging.AndroidConfig(priority='normal', ttl=86400)
     )
     response = messaging.send(message)
     # Response is a message ID string.
