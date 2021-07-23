@@ -1,5 +1,6 @@
 import itertools
 import logging
+import math
 
 from google.cloud import firestore
 
@@ -58,7 +59,7 @@ class SitesStore:
                 self.batch_write(date_doc_ref, sites_as_list)
                 date_doc_ref.set({'count': len(sites_as_list)})
 
-                updated_sites = len(sites_as_list) - date_doc_count
+                updated_sites = int(math.fabs(len(sites_as_list) - date_doc_count))
                 total_sites_updated += updated_sites
                 log.info(f'{updated_sites} new sites found for date {date}')
 
@@ -66,12 +67,17 @@ class SitesStore:
 
     def batch_write(self, doc, sites: [Site]):
         batch = self.fs_client.batch()
-        for site in sites:
-            if not site.latitude:
-                site.set_geocode(self.geocoder.get_geocode(site.full_address()))
 
-            site_doc_ref = doc.collection(f'{self.location}_sites').document(site.id())
-            batch.set(site_doc_ref, site.to_dict())
+        for site in sites:
+            try:
+                if not site.latitude:
+                    address = site.full_address()
+                    site.set_geocode(self.geocoder.get_geocode(address))
+
+                site_doc_ref = doc.collection(f'{self.location}_sites').document(site.id())
+                batch.set(site_doc_ref, site.to_dict())
+            except Exception as e:
+                log.exception(f'Error saving site: {site}]')
 
         batch.commit()
 

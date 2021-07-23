@@ -5,7 +5,7 @@ from datetime import datetime
 from datasets.dataset import Dataset
 from datasets.errors import DatasetErrors
 from storage.site import Site
-from utils.dateutils import parse_to_utc
+from utils.dateutils import parse_to_utc, now_as_utc
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class NSWSiteParser:
     def to_site(self, site: dict) -> Site:
         errors = DatasetErrors()
 
-        added_time = parse_to_utc(f'{site["Last updated date"]}T00:00:00', self.timezone)
+        added_time = self._get_added_time(site, errors)
         exposure_start_time, exposure_end_time = self._get_exposure_times(site, errors, added_time)
 
         lat, long = self._get_lat_long(site, errors)
@@ -58,6 +58,10 @@ class NSWSiteParser:
             geocode={},
             data_errors=errors.get(),
         )
+
+    def _get_added_time(self, site: dict, errors: DatasetErrors):
+        return errors.try_operation(lambda: parse_to_utc(f'{site["Last updated date"]}T00:00:00', self.timezone),
+                                    now_as_utc(), msg=f'Error parsing added date: {site["Last updated date"]}')
 
     def _get_lat_long(self, site: dict, errors: DatasetErrors):
         lat = errors.try_operation(lambda: float(site['Lat']), None, msg=f'Error parsing \'Lat\' field: {site["Lat"]}')
