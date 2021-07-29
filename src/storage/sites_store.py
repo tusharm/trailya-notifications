@@ -1,6 +1,7 @@
 import itertools
 import logging
 import math
+from typing import Optional
 
 from google.cloud import firestore
 
@@ -35,7 +36,8 @@ class SitesStore:
             No of documents updated in this run
 
         """
-        total_sites_updated = 0
+        last_run_details = self._count_from_most_recent_day()
+
         grouped_by_date = itertools.groupby(sorted(sites, key=_grouping_key), key=_grouping_key)
 
         location_col_ref = self.fs_client.collection(self.location)
@@ -60,10 +62,14 @@ class SitesStore:
                 date_doc_ref.set({'count': len(sites_as_list)})
 
                 updated_sites = int(math.fabs(len(sites_as_list) - date_doc_count))
-                total_sites_updated += updated_sites
                 log.info(f'{updated_sites} new sites found for date {date}')
 
-        return total_sites_updated
+        this_run_details = self._count_from_most_recent_day()
+
+        if this_run_details['date'] == last_run_details['date']:
+            return this_run_details['count'] - last_run_details['count']
+        else:
+            return this_run_details['count']
 
     def batch_write(self, doc, sites: [Site]):
         batch = self.fs_client.batch()
@@ -80,6 +86,12 @@ class SitesStore:
                 log.exception(f'Error saving site: {site}]')
 
         batch.commit()
+
+    def _count_from_most_recent_day(self) -> dict:
+        stream = self.fs_client.collection(self.location).stream()
+        docs = [doc for doc in stream]
+        docs.sort(key=lambda d: d.id, reverse=True)
+        return {} if len(docs) == 0 else {'date': docs[0].id, 'count': docs[0].to_dict()['count']}
 
 
 def _grouping_key(site: Site):

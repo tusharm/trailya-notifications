@@ -91,4 +91,4 @@ if __name__ == '__main__':
     for s in sites:
         print(s)
 
-    log.info(f'Total no of sites: {len(sites)}')
+    print(f'Total no of sites: {len(sites)}')
